@@ -16,6 +16,9 @@ using OpenQA.Selenium.Appium.Enums;
 using OpenQA.Selenium.Appium.Service;
 using OpenQA.Selenium.Remote;
 using System;
+using System.Drawing;
+using System.IO;
+using System.Linq;
 
 namespace OpenQA.Selenium.Appium.Tizen
 {
@@ -80,6 +83,29 @@ namespace OpenQA.Selenium.Appium.Tizen
         public TizenDriver(AppiumLocalService service, DesiredCapabilities desiredCapabilities, TimeSpan commandTimeout)
             : base(service, SetPlatformToCapabilities(desiredCapabilities, Platform), commandTimeout)
         {
+        }
+
+        public bool CompareToImages(Image origianalImage, Image compareImage)
+        {
+            MemoryStream originalImageStream = new MemoryStream();
+            MemoryStream compareImageStream = new MemoryStream();
+
+            origianalImage.Save(originalImageStream, origianalImage.RawFormat);
+            compareImage.Save(compareImageStream, compareImage.RawFormat);
+
+            return string.Equals(Convert.ToBase64String(originalImageStream.ToArray()), Convert.ToBase64String(compareImageStream.ToArray()));
+        }
+
+        public Image CropAndConvertImage(Screenshot screenshot, Rectangle rectangle)
+        {
+            MemoryStream imageStream = new MemoryStream(screenshot.AsByteArray);
+            Image screenshotImage = Image.FromStream(imageStream);
+
+            Graphics graphics = Graphics.FromImage(screenshotImage);
+
+            graphics.DrawImage(screenshotImage, 0, 0, rectangle, GraphicsUnit.Pixel);
+
+            return screenshotImage;
         }
 
         protected override RemoteWebElement CreateElement(string elementId) => new TizenElement(this, elementId);
